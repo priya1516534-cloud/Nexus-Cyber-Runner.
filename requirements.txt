@@ -1,0 +1,14 @@
+flask
+gunicorn
+requests
+python-telegram-bot
+pyTelegramBotAPI
+beautifulsoup4
+selenium
+pandas
+numpy
+pytz
+aiohttp
+pymongo
+python-dotenv
+
