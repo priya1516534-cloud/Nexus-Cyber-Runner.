@@ -1,30 +1,36 @@
 import os, subprocess, sys, ast
 from flask import Flask, request, jsonify, send_from_directory
 from threading import Thread
-from global_config import PORT
 
-app = Flask(__name__, static_folder=".")
+app = Flask(__name__)
 
-def AUTO_SCAN_INSTALL(file_path):
+# --- SMART LIBRARY CHECKER ---
+def install_missing_libs(file_path):
     try:
-        # Step 1: Scan Modules
         with open(file_path, "r") as f:
             tree = ast.parse(f.read())
-        modules = [n.name.split('.')[0] for node in ast.walk(tree) if isinstance(node, ast.Import) for n in node.names]
         
-        # Step 2: Force Install (Render friendly)
-        for mod in set(modules):
-            subprocess.run([sys.executable, "-m", "pip", "install", mod], check=True)
+        # Script ke andar se imports dhoondna
+        imported_libs = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for n in node.names: imported_libs.append(n.name.split('.')[0])
+            elif isinstance(node, ast.ImportFrom):
+                if node.module: imported_libs.append(node.module.split('.')[0])
         
-        # Step 3: Start Bot with Logs
-        log_file = open("bot_output.log", "a")
-        print(f"🚀 Starting Bot: {file_path}")
-        # 'nohup' use kar rahe hain taaki process kill na ho
-        subprocess.Popen([sys.executable, file_path], stdout=log_file, stderr=log_file)
+        # System libraries ko chhod kar baaki install karna
+        exclude = ['os', 'sys', 'time', 'math', 'threading', 'json', 're', 'ast']
+        for lib in set(imported_libs):
+            if lib not in exclude:
+                print(f"[!] NEXUS-INSTALLER: Installing {lib}...")
+                subprocess.run([sys.executable, "-m", "pip", "install", lib])
+        
+        # Bot ko background mein start karna
+        print(f"[#] NEXUS-CORE: Launching {file_path}")
+        subprocess.Popen([sys.executable, file_path])
         
     except Exception as e:
-        with open("error.log", "a") as f:
-            f.write(f"Error: {str(e)}\n")
+        print(f"[-] NEXUS-ERROR: {e}")
 
 @app.route('/')
 def home():
@@ -32,14 +38,22 @@ def home():
 
 @app.route('/deploy', methods=['POST'])
 def deploy():
-    if 'file' not in request.files: return jsonify({"status": "No File"}), 400
+    if 'file' not in request.files: return jsonify({"status": "File Missing"}), 400
+    
     file = request.files['file']
     os.makedirs("VAULT", exist_ok=True)
-    path = os.path.join("VAULT", file.filename)
-    file.save(path)
-    Thread(target=AUTO_SCAN_INSTALL, args=(path,)).start()
-    return jsonify({"status": "🚀 BOT DEPLOYED! System is running it in background."})
+    f_path = os.path.join("VAULT", file.filename)
+    file.save(f_path)
+    
+    # Nayi thread mein install aur run karna
+    Thread(target=install_missing_libs, args=(f_path,)).start()
+    
+    return jsonify({
+        "status": "DEPLOYMENT INITIALIZED 🚀",
+        "bot": file.filename,
+        "msg": "Libraries are being checked and installed..."
+    })
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=PORT)
-
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host='0.0.0.0', port=port)

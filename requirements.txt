@@ -11,4 +11,3 @@ pytz
 aiohttp
 pymongo
 python-dotenv
-

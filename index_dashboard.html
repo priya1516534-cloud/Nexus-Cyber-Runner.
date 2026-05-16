@@ -1,13 +1,46 @@
 <!DOCTYPE html>
 <html>
-<head><title>Nexus Cyber Host</title><link rel="stylesheet" href="CYBER_THEME.css"></head>
+<head>
+    <title>NEXUS COMMANDER v3</title>
+    <style>
+        body { background: #000; color: #0f0; font-family: 'Courier New', monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .nexus-card { width: 90%; max-width: 450px; border: 2px solid #0f0; padding: 25px; box-shadow: 0 0 15px #0f0; border-radius: 20px; text-align: center; background: #0a0a0a; }
+        h1 { font-size: 20px; text-shadow: 0 0 10px #0f0; }
+        .status-box { background: #111; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid #333; min-height: 50px; font-size: 13px; }
+        .upload-btn { background: #0f0; color: #000; border: none; padding: 12px 20px; font-weight: bold; border-radius: 50px; cursor: pointer; transition: 0.3s; width: 100%; }
+        .upload-btn:hover { background: #fff; box-shadow: 0 0 20px #fff; }
+        input[type="file"] { margin: 15px 0; color: #0f0; font-size: 12px; }
+        .version { font-size: 10px; color: #555; margin-top: 15px; }
+    </style>
+</head>
 <body>
-    <div class="box">
-        <h2>[ NEXUS BOT DEPLOYER ]</h2>
-        <input type="file" id="f"><br>
-        <button onclick="U()">DEPLOY SCRIPT</button>
-        <div id="l">System Ready...</div>
+    <div class="nexus-card">
+        <h1>💀 NEXUS CORE v3.0 💀</h1>
+        <div class="status-box" id="msg">📡 System: ONLINE | Waiting for Command...</div>
+        
+        <input type="file" id="f" accept=".py">
+        <button class="upload-btn" onclick="RUN()">⚡ DEPLOY BOT ⚡</button>
+        
+        <div class="version">SECURE ENCRYPTION ENABLED | 2026</div>
     </div>
-    <script src="TERMINAL_UI.js"></script>
+
+    <script>
+        async function RUN() {
+            let file = document.getElementById('f').files[0];
+            let msg = document.getElementById('msg');
+            if(!file) { msg.innerHTML = "❌ ERROR: Pehle file select karo!"; return; }
+            
+            let fd = new FormData(); fd.append('file', file);
+            msg.innerHTML = "📤 UPLOADING TO VAULT... 📦";
+            
+            try {
+                let res = await fetch('/deploy', {method:'POST', body:fd});
+                let data = await res.json();
+                msg.innerHTML = "✅ " + data.status + "<br>🤖 Bot: " + data.bot + "<br>⚙️ Checking Libraries...";
+            } catch(e) {
+                msg.innerHTML = "❌ CRITICAL ERROR: Connection Broken!";
+            }
+        }
+    </script>
 </body>
 </html>
